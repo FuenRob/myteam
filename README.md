@@ -1,0 +1,106 @@
+# Sistema de Gestión de Usuarios (MyTeam)
+
+Este proyecto es una API REST backend escrita en **Go** para la gestión de usuarios, roles y empresas. Está diseñado siguiendo los principios de **Clean Architecture** para garantizar escalabilidad y mantenibilidad, evitando el uso de frameworks pesados para el servidor HTTP.
+
+## 🚀 Características
+
+- Gestión de **Empresas** (Creación, Lectura, Actualización, Borrado).
+- Gestión de **Usuarios** asignados a empresas.
+- Roles de usuario: `ADMIN` y `EMPLOYEE`.
+- Arquitectura hexagonal (Ports & Adapters).
+- Persistencia en **PostgreSQL**.
+- Migraciones SQL nativas.
+
+## 🛠️ Tecnologías
+
+- **Lenguaje**: Go 1.22+ (aprovechando el nuevo `http.ServeMux`).
+- **Base de Datos**: PostgreSQL.
+- **Drivers**: `lib/pq`.
+- **Contenedores**: Docker & Docker Compose.
+
+## 📂 Estructura del Proyecto
+
+El proyecto sigue el estándar de estructura de proyectos en Go:
+
+```
+myteam/
+├── cmd/api/            # Punto de entrada de la aplicación (main.go)
+├── internal/
+│   ├── domain/         # Entidades de negocio (Company, User) y Errores
+│   ├── port/           # Interfaces (Puertos) para Repositorios y Servicios
+│   ├── service/        # Lógica de negocio (Casos de Uso)
+│   ├── adapter/        # Implementaciones (Adaptadores)
+│   │   ├── handler/    # Controladores HTTP
+│   │   └── storage/    # Implementación de persistencia (Postgres)
+├── migrations/         # Scripts SQL de creación de tablas
+└── docker-compose.yaml # Configuración de BBDD y herramientas
+```
+
+## ⚙️ Configuración y Ejecución
+
+### 1. Iniciar Base de Datos
+El proyecto incluye un archivo `docker-compose.yaml` para levantar PostgreSQL y Adminer.
+
+```bash
+docker-compose up -d db
+```
+> **Nota**: El servicio `adminer` está configurado en el puerto `8080` en el `docker-compose.yaml`. La aplicación Go también usa el puerto `8080` por defecto. Asegúrate de detener Adminer o cambiar el puerto en `docker-compose.yaml` si quieres ejecutar la API en el mismo puerto, o simplemente levanta solo la BBDD (`docker-compose up -d db`).
+
+### 2. Ejecutar la Aplicación
+Puedes ejecutar la aplicación localmente usando `go run`. La aplicación intentará conectar a postgres en `localhost:5432` por defecto.
+
+**Variables de Entorno (Opcionales):**
+- `DB_HOST`: Host de la BBDD (default: localhost).
+- `DB_USER`: Usuario (default: postgres).
+- `DB_PASS`: Contraseña (default: postgres).
+- `DB_NAME`: Nombre de la BBDD (default: myteam).
+
+**Ejecución:**
+```bash
+go run cmd/api/main.go
+```
+
+### 3. Migraciones
+La primera vez que arranques, necesitarás crear las tablas. Puedes usar un cliente SQL o el propio Adminer.
+
+Script ubicación: `migrations/schema.sql`.
+
+## 📡 API Endpoints
+
+### Empresas
+
+- **Crear Empresa**
+  - `POST /companies`
+  - Body: `{"name": "Tech Corp", "cif": "B12345678"}`
+
+- **Obtener Empresa**
+  - `GET /companies/{id}`
+
+### Usuarios
+
+- **Crear Usuario**
+  - `POST /users`
+  - Body: `{"company_id": "uuid...", "name": "Alice", "email": "alice@email.com", "password": "pass", "role": "ADMIN"}`
+
+- **Obtener Usuario**
+  - `GET /users/{id}`
+
+- **Listar Usuarios de una Empresa**
+  - `GET /companies/{companyID}/users`
+
+## ✅ Pruebas
+Puedes probar los endpoints usando `curl`:
+
+```bash
+# Crear Empresa
+curl -X POST http://localhost:8080/companies \
+  -H "Content-Type: application/json" \
+  -d '{"name": "My Company", "cif": "ESD123"}'
+
+# (Copia el ID de la respuesta) --> <ID_EMPRESA>
+
+# Crear Usuario
+curl -X POST http://localhost:8080/users \
+  -H "Content-Type: application/json" \
+  -d '{"company_id": "<ID_EMPRESA>", "name": "Roberto", "email": "roberto@email.com", "password": "123", "role": "ADMIN"}'
+```
