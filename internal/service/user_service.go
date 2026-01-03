@@ -7,6 +7,7 @@ import (
 	"github.com/fuenr/myteam/internal/domain"
 	"github.com/fuenr/myteam/internal/port"
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserService struct {
@@ -27,9 +28,12 @@ func (s *UserService) Create(ctx context.Context, companyID uuid.UUID, name, ema
 		return nil, err
 	}
 
-	// TODO: Hash password properly. For now we just store it as is (Concept Phase).
-	// In production, use bcrypt.
-	passwordHash := password
+	// Hash password using bcrypt
+	hashedBytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+	passwordHash := string(hashedBytes)
 
 	user, err := domain.NewUser(companyID, name, email, passwordHash, role)
 	if err != nil {
