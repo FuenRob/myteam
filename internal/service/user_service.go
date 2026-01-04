@@ -46,6 +46,34 @@ func (s *UserService) Create(ctx context.Context, companyID uuid.UUID, name, ema
 	return user, nil
 }
 
+func (s *UserService) BatchCreate(ctx context.Context, companyID uuid.UUID, usersReq []domain.CreateUserRequest) ([]*domain.User, error) {
+	if _, err := s.companyRepo.GetCompanyByID(ctx, companyID); err != nil {
+		return nil, err
+	}
+
+	var users []*domain.User
+
+	for _, req := range usersReq {
+		hashedBytes, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+		if err != nil {
+			return nil, err
+		}
+		passwordHash := string(hashedBytes)
+
+		user, err := domain.NewUser(companyID, req.Name, req.Email, passwordHash, req.Role)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	if err := s.userRepo.BatchCreateUsers(ctx, users); err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
 func (s *UserService) Get(ctx context.Context, id uuid.UUID) (*domain.User, error) {
 	return s.userRepo.GetUserByID(ctx, id)
 }

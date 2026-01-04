@@ -40,6 +40,7 @@ func main() {
 
 	mux.HandleFunc("POST /users", h.CreateUser)
 	mux.HandleFunc("GET /users/{id}", h.GetUser)
+	mux.HandleFunc("POST /companies/{companyID}/users/batch", h.BatchCreateUsers)
 	mux.HandleFunc("GET /companies/{companyID}/users", h.GetUsersByCompany)
 
 	// 5. Server

@@ -88,6 +88,10 @@ Script ubicación: `migrations/schema.sql`.
 - **Listar Usuarios de una Empresa**
   - `GET /companies/{companyID}/users`
 
+- **Crear Usuarios Masivamente (Batch)**
+  - `POST /companies/{companyID}/users/batch`
+  - Body: `[{"name": "...", ...}, ...]`
+
 ## ✅ Pruebas
 Puedes probar los endpoints usando `curl`:
 
@@ -103,4 +107,9 @@ curl -X POST http://localhost:8080/companies \
 curl -X POST http://localhost:8080/users \
   -H "Content-Type: application/json" \
   -d '{"company_id": "<ID_EMPRESA>", "name": "Roberto", "email": "roberto@email.com", "password": "123", "role": "ADMIN"}'
+
+# Crear Usuarios Masivamente
+curl -X POST http://localhost:8080/companies/<ID_EMPRESA>/users/batch \
+  -H "Content-Type: application/json" \
+  -d '[{"name": "Empleado1", "email": "emp1@email.com", "password": "123", "role": "EMPLOYEE"}, {"name": "Empleado2", "email": "emp2@email.com", "password": "123", "role": "EMPLOYEE"}]'
 ```

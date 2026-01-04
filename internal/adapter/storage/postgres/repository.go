@@ -102,6 +102,33 @@ func (r *Repository) CreateUser(ctx context.Context, u *domain.User) error {
 	return nil
 }
 
+func (r *Repository) BatchCreateUsers(ctx context.Context, users []*domain.User) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	query := `INSERT INTO users (id, company_id, name, email, password_hash, role, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
+	stmt, err := tx.PrepareContext(ctx, query)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	for _, u := range users {
+		_, err := stmt.ExecContext(ctx, u.ID, u.CompanyID, u.Name, u.Email, u.PasswordHash, u.Role, u.CreatedAt, u.UpdatedAt)
+		if err != nil {
+			if isUniqueViolation(err) {
+				return domain.ErrDuplicate
+			}
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
 func (r *Repository) GetUserByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
 	query := `SELECT id, company_id, name, email, password_hash, role, created_at, updated_at FROM users WHERE id = $1`
 	row := r.db.QueryRowContext(ctx, query, id)

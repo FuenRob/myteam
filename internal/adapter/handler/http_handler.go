@@ -107,6 +107,30 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	h.respondJSON(w, http.StatusCreated, user)
 }
 
+func (h *Handler) BatchCreateUsers(w http.ResponseWriter, r *http.Request) {
+	idStr := r.PathValue("companyID")
+	companyID, err := uuid.Parse(idStr)
+	if err != nil {
+		h.respondError(w, domain.ErrInvalidInput)
+		return
+	}
+
+	var req []domain.CreateUserRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.respondError(w, domain.ErrInvalidInput)
+		return
+	}
+
+	// Basic validation (e.g. max batch size) could go here
+
+	users, err := h.userService.BatchCreate(r.Context(), companyID, req)
+	if err != nil {
+		h.respondError(w, err)
+		return
+	}
+	h.respondJSON(w, http.StatusCreated, users)
+}
+
 func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 	idStr := r.PathValue("id")
 	id, err := uuid.Parse(idStr)
