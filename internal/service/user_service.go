@@ -99,6 +99,24 @@ func (s *UserService) Update(ctx context.Context, id uuid.UUID, name, email stri
 	return user, nil
 }
 
+func (s *UserService) Login(ctx context.Context, email, password string) (*domain.User, error) {
+	// 1. Find user by email
+	user, err := s.userRepo.GetUserByEmail(ctx, email)
+	if err != nil {
+		if err == domain.ErrNotFound {
+			return nil, domain.ErrInvalidCredentials
+		}
+		return nil, err
+	}
+
+	// 2. Compare password
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
+		return nil, domain.ErrInvalidCredentials
+	}
+
+	return user, nil
+}
+
 func (s *UserService) Delete(ctx context.Context, id uuid.UUID) error {
 	return s.userRepo.DeleteUser(ctx, id)
 }

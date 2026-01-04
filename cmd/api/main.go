@@ -38,6 +38,8 @@ func main() {
 	mux.HandleFunc("POST /companies", h.CreateCompany)
 	mux.HandleFunc("GET /companies/{id}", h.GetCompany)
 
+	mux.HandleFunc("POST /login", h.Login)
+
 	mux.HandleFunc("POST /users", h.CreateUser)
 	mux.HandleFunc("GET /users/{id}", h.GetUser)
 	mux.HandleFunc("POST /companies/{companyID}/users/batch", h.BatchCreateUsers)

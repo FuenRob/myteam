@@ -131,6 +131,27 @@ func (h *Handler) BatchCreateUsers(w http.ResponseWriter, r *http.Request) {
 	h.respondJSON(w, http.StatusCreated, users)
 }
 
+func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
+	var req domain.LoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.respondError(w, domain.ErrInvalidInput)
+		return
+	}
+
+	user, err := h.userService.Login(r.Context(), req.Email, req.Password)
+	if err != nil {
+		h.respondError(w, err)
+		return
+	}
+
+	// For now, return the user object (or simple success)
+	// In a real app, this would return a JWT
+	h.respondJSON(w, http.StatusOK, map[string]interface{}{
+		"message": "login successful",
+		"user":    user,
+	})
+}
+
 func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 	idStr := r.PathValue("id")
 	id, err := uuid.Parse(idStr)
