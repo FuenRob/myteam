@@ -87,6 +87,15 @@ func (r *Repository) DeleteCompany(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
+func (r *Repository) Count(ctx context.Context) (int64, error) {
+	query := `SELECT COUNT(*) FROM companies`
+	var count int64
+	if err := r.db.QueryRowContext(ctx, query).Scan(&count); err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 // --- UserRepository ---
 
 func (r *Repository) CreateUser(ctx context.Context, u *domain.User) error {

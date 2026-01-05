@@ -31,12 +31,15 @@ func main() {
 	repo := postgres.NewRepository(db)
 	companyService := service.NewCompanyService(repo)
 	userService := service.NewUserService(repo, repo)
-	h := handler.NewHandler(companyService, userService)
+	dashboardService := service.NewDashboardService(repo, repo)
+	h := handler.NewHandler(companyService, userService, dashboardService)
 
 	// 4. Router
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /companies", h.CreateCompany)
 	mux.HandleFunc("GET /companies/{id}", h.GetCompany)
+
+	mux.HandleFunc("GET /dashboard/stats", h.GetDashboardStats)
 
 	mux.HandleFunc("POST /login", h.Login)
 

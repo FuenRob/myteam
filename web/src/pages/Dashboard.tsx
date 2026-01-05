@@ -10,7 +10,7 @@ import {
     Activity,
     DollarSign
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 // Placeholder for KPI Card Component
 const KPICard = ({ title, value, change, icon: Icon, trend }: { title: string, value: string, change: string, icon: any, trend: 'up' | 'down' | 'neutral' }) => (
@@ -43,6 +43,42 @@ const KPICard = ({ title, value, change, icon: Icon, trend }: { title: string, v
 
 export default function Dashboard({ onLogout }: { onLogout: () => void }) {
     const [activeTab, setActiveTab] = useState('overview');
+
+    interface StatData {
+        title: string;
+        value: string;
+        change: string;
+        icon: any;
+        trend: 'up' | 'down' | 'neutral';
+    }
+
+    const [stats, setStats] = useState<StatData[]>([
+        { title: "Total Users", value: "0", change: "0%", icon: Users, trend: 'neutral' },
+        { title: "Active Companies", value: "0", change: "0%", icon: Building2, trend: 'neutral' },
+        { title: "Revenue", value: "$45,231", change: "0.8%", icon: DollarSign, trend: 'down' },
+        { title: "Server Usage", value: "24%", change: "5.0%", icon: Activity, trend: 'neutral' },
+    ]);
+
+    useEffect(() => {
+        fetch('/dashboard/stats')
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.displaystats) {
+                    setStats(prevStats => prevStats.map(stat => {
+                        if (stat.title === "Total Users") {
+                            const apiStat = data.displaystats.find((s: any) => s.type === "users");
+                            if (apiStat) return { ...stat, value: apiStat.value.toString(), trend: 'up', change: '+1' };
+                        }
+                        if (stat.title === "Active Companies") {
+                            const apiStat = data.displaystats.find((s: any) => s.type === "companies");
+                            if (apiStat) return { ...stat, value: apiStat.value.toString(), trend: 'up', change: '+1' };
+                        }
+                        return stat;
+                    }));
+                }
+            })
+            .catch(err => console.error("Failed to fetch stats:", err));
+    }, []);
 
     const menuItems = [
         { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -163,10 +199,9 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
 
                     {/* KPI Grid */}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
-                        <KPICard title="Total Users" value="1,234" change="12.5%" icon={Users} trend="up" />
-                        <KPICard title="Active Companies" value="45" change="2.1%" icon={Building2} trend="up" />
-                        <KPICard title="Revenue" value="$45,231" change="0.8%" icon={DollarSign} trend="down" />
-                        <KPICard title="Server Usage" value="24%" change="5.0%" icon={Activity} trend="neutral" />
+                        {stats.map((stat, index) => (
+                            <KPICard key={index} {...stat} />
+                        ))}
                     </div>
 
                     {/* Placeholder for future charts/tables */}

@@ -10,14 +10,16 @@ import (
 )
 
 type Handler struct {
-	companyService *service.CompanyService
-	userService    *service.UserService
+	companyService   *service.CompanyService
+	userService      *service.UserService
+	dashboardService *service.DashboardService
 }
 
-func NewHandler(companyService *service.CompanyService, userService *service.UserService) *Handler {
+func NewHandler(companyService *service.CompanyService, userService *service.UserService, dashboardService *service.DashboardService) *Handler {
 	return &Handler{
-		companyService: companyService,
-		userService:    userService,
+		companyService:   companyService,
+		userService:      userService,
+		dashboardService: dashboardService,
 	}
 }
 
@@ -182,4 +184,15 @@ func (h *Handler) GetUsersByCompany(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	h.respondJSON(w, http.StatusOK, users)
+}
+
+// --- Dashboard Handlers ---
+
+func (h *Handler) GetDashboardStats(w http.ResponseWriter, r *http.Request) {
+	stats, err := h.dashboardService.GetStats(r.Context())
+	if err != nil {
+		h.respondError(w, err)
+		return
+	}
+	h.respondJSON(w, http.StatusOK, stats)
 }

@@ -11,3 +11,13 @@ type LoginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
+
+type StatItem struct {
+	Title string `json:"title"`
+	Value int64  `json:"value"`
+	Type  string `json:"type"`
+}
+
+type DashboardStatsResponse struct {
+	DisplayStats []StatItem `json:"displaystats"`
+}
