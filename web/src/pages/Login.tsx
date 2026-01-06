@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Lock, Mail, ArrowRight, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface LoginProps {
-    onLoginSuccess: () => void;
+    onLoginSuccess: (user: any) => void;
 }
 
 export default function Login({ onLoginSuccess }: LoginProps) {
+    const navigate = useNavigate();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -29,7 +31,14 @@ export default function Login({ onLoginSuccess }: LoginProps) {
 
             const data = await response.json();
             console.log('Login successful:', data);
-            onLoginSuccess();
+            if (data.user) {
+                onLoginSuccess(data.user);
+                navigate('/dashboard');
+            } else {
+                // Fallback for previous API version if needed, though handler updates suggest data.user usage
+                onLoginSuccess(data);
+                navigate('/dashboard');
+            }
 
         } catch (err) {
             setError('Failed to login. Please check your credentials.');
