@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { UserPlus, MoreVertical, Mail, Calendar } from 'lucide-react';
+import CreateUserModal from '../components/CreateUserModal';
 
 interface User {
     id: string;
     name: string;
     email: string;
-    role: number;
+    role: string;
     created_at: string;
 }
 
@@ -16,9 +17,11 @@ interface UsersPageProps {
 export default function UsersPage({ currentUser }: UsersPageProps) {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
-    useEffect(() => {
+    const fetchUsers = useCallback(() => {
         if (currentUser?.company_id) {
+            setLoading(true);
             fetch(`/companies/${currentUser.company_id}/users`)
                 .then(res => res.json())
                 .then(data => {
@@ -31,6 +34,10 @@ export default function UsersPage({ currentUser }: UsersPageProps) {
         }
     }, [currentUser]);
 
+    useEffect(() => {
+        fetchUsers();
+    }, [fetchUsers]);
+
     return (
         <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
@@ -38,10 +45,12 @@ export default function UsersPage({ currentUser }: UsersPageProps) {
                     <h1 style={{ fontSize: '1.875rem', fontWeight: 700, marginBottom: '0.5rem' }}>Users</h1>
                     <p className="text-muted">Manage your team members and their account permissions here.</p>
                 </div>
-                <button className="btn" style={{ width: 'auto' }}>
-                    <UserPlus size={18} style={{ marginRight: '8px' }} />
-                    Add User
-                </button>
+                {currentUser?.role === 'ADMIN' && (
+                    <button className="btn" style={{ width: 'auto' }} onClick={() => setIsModalOpen(true)}>
+                        <UserPlus size={18} style={{ marginRight: '8px' }} />
+                        Add User
+                    </button>
+                )}
             </div>
 
             <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
@@ -81,10 +90,10 @@ export default function UsersPage({ currentUser }: UsersPageProps) {
                                             borderRadius: '9999px',
                                             fontSize: '0.75rem',
                                             fontWeight: 500,
-                                            backgroundColor: user.role === 0 ? 'rgba(59, 130, 246, 0.1)' : 'rgba(16, 185, 129, 0.1)',
-                                            color: user.role === 0 ? '#60a5fa' : '#34d399'
+                                            backgroundColor: user.role === 'ADMIN' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                                            color: user.role === 'ADMIN' ? '#60a5fa' : '#34d399'
                                         }}>
-                                            {user.role === 0 ? 'Admin' : 'User'}
+                                            {user.role === 'ADMIN' ? 'Admin' : 'User'}
                                         </span>
                                     </td>
                                     <td style={{ padding: '1rem 1.5rem', color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
@@ -104,6 +113,13 @@ export default function UsersPage({ currentUser }: UsersPageProps) {
                     </tbody>
                 </table>
             </div>
-        </div>
+
+            <CreateUserModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSuccess={fetchUsers}
+                companyId={currentUser?.company_id}
+            />
+        </div >
     );
 }
