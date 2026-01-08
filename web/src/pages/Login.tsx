@@ -114,6 +114,17 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                     <button type="submit" className="btn mt-4" disabled={loading}>
                         {loading ? <Loader2 className="animate-spin" /> : <>Sign In <ArrowRight size={18} style={{ marginLeft: '8px' }} /></>}
                     </button>
+
+                    <div style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.875rem' }}>
+                        <span className="text-muted">Don't have an account? </span>
+                        <button
+                            type="button"
+                            onClick={() => navigate('/register')}
+                            style={{ background: 'none', border: 'none', color: 'var(--color-primary)', fontWeight: 600, cursor: 'pointer' }}
+                        >
+                            Sign Up
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
