@@ -8,7 +8,10 @@ import Layout from './components/Layout';
 import './index.css';
 
 function App() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<any>(() => {
+    const savedUser = localStorage.getItem('user');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
 
   const handleLogin = (userData: any) => {
     setUser(userData);
@@ -16,6 +19,8 @@ function App() {
 
   const handleLogout = () => {
     setUser(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
   };
 
   return (

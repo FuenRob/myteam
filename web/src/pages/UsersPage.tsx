@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { UserPlus, MoreVertical, Mail, Calendar } from 'lucide-react';
 import CreateUserModal from '../components/CreateUserModal';
+import { apiFetch } from '../utils/api';
 
 interface User {
     id: string;
@@ -22,7 +23,7 @@ export default function UsersPage({ currentUser }: UsersPageProps) {
     const fetchUsers = useCallback(() => {
         if (currentUser?.company_id) {
             setLoading(true);
-            fetch(`/companies/${currentUser.company_id}/users`)
+            apiFetch(`/companies/${currentUser.company_id}/users`)
                 .then(res => res.json())
                 .then(data => {
                     if (Array.isArray(data)) {

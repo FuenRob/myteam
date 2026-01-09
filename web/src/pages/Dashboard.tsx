@@ -1,9 +1,5 @@
-import {
-    Users,
-    Building2,
-    Activity,
-    DollarSign
-} from 'lucide-react';
+import { Users, Building2, DollarSign, Activity } from 'lucide-react';
+import { apiFetch } from '../utils/api';
 import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 
@@ -58,7 +54,7 @@ export default function Dashboard({ currentUser, onLogout }: DashboardProps) {
     ]);
 
     useEffect(() => {
-        fetch('/dashboard/stats')
+        apiFetch('/dashboard/stats')
             .then(res => res.json())
             .then(data => {
                 if (data && data.displaystats) {
@@ -75,7 +71,7 @@ export default function Dashboard({ currentUser, onLogout }: DashboardProps) {
                     }));
                 }
             })
-            .catch(err => console.error("Failed to fetch stats:", err));
+            .catch(err => console.error("Failed to fetch dashboard stats", err));
     }, []);
 
     return (

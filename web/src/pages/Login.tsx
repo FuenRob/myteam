@@ -32,6 +32,11 @@ export default function Login({ onLoginSuccess }: LoginProps) {
             const data = await response.json();
             console.log('Login successful:', data);
             if (data.user) {
+                if (data.token) {
+                    localStorage.setItem('token', data.token);
+                    // Also store user for potential persistence
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                }
                 onLoginSuccess(data.user);
                 navigate('/dashboard');
             } else {

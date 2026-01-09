@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Loader2, AlertCircle } from 'lucide-react';
+import { apiFetch } from '../utils/api';
 
 interface CreateUserModalProps {
     isOpen: boolean;
@@ -24,9 +25,8 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess, companyId 
         setError('');
 
         try {
-            const response = await fetch('/users', {
+            const response = await apiFetch('/users', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     company_id: companyId,
                     name,

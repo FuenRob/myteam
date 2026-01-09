@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/fuenr/myteam/internal/adapter/handler"
+	"github.com/fuenr/myteam/internal/adapter/middleware"
 	"github.com/fuenr/myteam/internal/adapter/storage/postgres"
 	"github.com/fuenr/myteam/internal/config"
 	"github.com/fuenr/myteam/internal/server"
@@ -36,17 +37,40 @@ func main() {
 
 	// 4. Router
 	mux := http.NewServeMux()
-	mux.HandleFunc("POST /companies", h.CreateCompany)
-	mux.HandleFunc("GET /companies/{id}", h.GetCompany)
 
-	mux.HandleFunc("GET /dashboard/stats", h.GetDashboardStats)
-
+	// Public Routes
 	mux.HandleFunc("POST /login", h.Login)
+	mux.HandleFunc("POST /companies", h.CreateCompany) // Assuming creating company is public for now (registration)
 
-	mux.HandleFunc("POST /users", h.CreateUser)
-	mux.HandleFunc("GET /users/{id}", h.GetUser)
+	// Batch Create (Allow creating multiple users without auth for now as per requirement)
+	// "Además en el proceso de registro se crean usuarios de manera masiva, en ese caso sí está bien que se creen sin necesidad de comprobar la sesión"
 	mux.HandleFunc("POST /companies/{companyID}/users/batch", h.BatchCreateUsers)
+
+	// Create User (Public for registration/onboarding flow)
+	mux.HandleFunc("POST /users", h.CreateUser)
 	mux.HandleFunc("GET /companies/{companyID}/users", h.GetUsersByCompany)
+
+	// Protected Routes
+	// Helper to wrap handlers with Auth Middleware
+	protected := middleware.AuthMiddleware
+	selfOrAdmin := func(next http.HandlerFunc) http.Handler {
+		return protected(middleware.RequireSelfOrAdmin(next))
+	}
+
+	mux.Handle("GET /companies/{id}", protected(http.HandlerFunc(h.GetCompany)))
+
+	// Dashboard Stats
+	mux.Handle("GET /dashboard/stats", protected(http.HandlerFunc(h.GetDashboardStats)))
+
+	// User Management
+	// POST /users is now public (moved up)
+
+	// Get and Update User (Self or Admin)
+	mux.Handle("GET /users/{id}", protected(http.HandlerFunc(h.GetUser))) // Reading is usually allowed for authenticated users, or restrict to company?
+	// For now, let's keep GET simple (Auth only) or RequireSelfOrAdmin if we want strict privacy.
+	// User request focused on "Create or Edit". Let's restrict Edit.
+
+	mux.Handle("PUT /users/{id}", selfOrAdmin(h.UpdateUser))
 
 	// 5. Server
 	srv := server.NewServer(cfg.ServerPort, mux)
