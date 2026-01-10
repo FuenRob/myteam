@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { UserPlus, MoreVertical, Mail, Calendar } from 'lucide-react';
 import CreateUserModal from '../components/CreateUserModal';
 import { apiFetch } from '../utils/api';
@@ -16,6 +17,7 @@ interface UsersPageProps {
 }
 
 export default function UsersPage({ currentUser }: UsersPageProps) {
+    const navigate = useNavigate();
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -39,8 +41,24 @@ export default function UsersPage({ currentUser }: UsersPageProps) {
         fetchUsers();
     }, [fetchUsers]);
 
+    const [activeMenu, setActiveMenu] = useState<string | null>(null);
+
+    const handleDeleteUser = async (userId: string) => {
+        if (!window.confirm('Are you sure you want to delete this user?')) return;
+
+        try {
+            const res = await apiFetch(`/users/${userId}`, { method: 'DELETE' });
+            if (res.ok) {
+                fetchUsers();
+            }
+        } catch (error) {
+            console.error("Failed to delete user", error);
+        }
+        setActiveMenu(null);
+    };
+
     return (
-        <div>
+        <div style={{ paddingBottom: '4rem' }} onClick={() => setActiveMenu(null)}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                 <div>
                     <h1 style={{ fontSize: '1.875rem', fontWeight: 700, marginBottom: '0.5rem' }}>Users</h1>
@@ -54,7 +72,7 @@ export default function UsersPage({ currentUser }: UsersPageProps) {
                 )}
             </div>
 
-            <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+            <div className="card" style={{ padding: 0, overflow: 'visible' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                     <thead style={{ backgroundColor: 'var(--color-surface)', borderBottom: '1px solid var(--color-border)' }}>
                         <tr>
@@ -73,12 +91,15 @@ export default function UsersPage({ currentUser }: UsersPageProps) {
                             users.map(user => (
                                 <tr key={user.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
                                     <td style={{ padding: '1rem 1.5rem' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                        <div
+                                            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}
+                                            onClick={() => navigate(`/user/detail/${user.id}`)}
+                                        >
                                             <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'var(--color-surface-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.875rem', fontWeight: 600 }}>
                                                 {user.name.substring(0, 2).toUpperCase()}
                                             </div>
                                             <div>
-                                                <div style={{ fontWeight: 500 }}>{user.name}</div>
+                                                <div style={{ fontWeight: 500, color: 'var(--color-text)' }}>{user.name}</div>
                                                 <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                                                     <Mail size={12} /> {user.email}
                                                 </div>
@@ -103,10 +124,48 @@ export default function UsersPage({ currentUser }: UsersPageProps) {
                                             {new Date(user.created_at).toLocaleDateString()}
                                         </div>
                                     </td>
-                                    <td style={{ padding: '1rem 1.5rem' }}>
-                                        <button style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', padding: '0.25rem' }}>
+                                    <td style={{ padding: '1rem 1.5rem', position: 'relative' }}>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setActiveMenu(activeMenu === user.id ? null : user.id);
+                                            }}
+                                            style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', padding: '0.25rem', cursor: 'pointer' }}
+                                        >
                                             <MoreVertical size={18} />
                                         </button>
+
+                                        {activeMenu === user.id && (
+                                            <div style={{
+                                                position: 'absolute',
+                                                right: '1.5rem',
+                                                top: '3rem',
+                                                backgroundColor: 'var(--color-surface)',
+                                                border: '1px solid var(--color-border)',
+                                                borderRadius: 'var(--radius-md)',
+                                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.5)',
+                                                zIndex: 10,
+                                                minWidth: '150px',
+                                                overflow: 'hidden'
+                                            }}>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); navigate(`/user/detail/${user.id}`); }}
+                                                    style={{ width: '100%', textAlign: 'left', padding: '0.75rem 1rem', background: 'none', border: 'none', color: 'var(--color-text)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}
+                                                    className="hover:bg-white/5"
+                                                >
+                                                    View Details
+                                                </button>
+                                                {currentUser?.role === 'ADMIN' && (
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); handleDeleteUser(user.id); }}
+                                                        style={{ width: '100%', textAlign: 'left', padding: '0.75rem 1rem', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}
+                                                        className="hover:bg-white/5"
+                                                    >
+                                                        Delete User
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
                                     </td>
                                 </tr>
                             ))
@@ -121,6 +180,6 @@ export default function UsersPage({ currentUser }: UsersPageProps) {
                 onSuccess={fetchUsers}
                 companyId={currentUser?.company_id}
             />
-        </div >
+        </div>
     );
 }

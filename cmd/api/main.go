@@ -8,6 +8,7 @@ import (
 	"github.com/fuenr/myteam/internal/adapter/middleware"
 	"github.com/fuenr/myteam/internal/adapter/storage/postgres"
 	"github.com/fuenr/myteam/internal/config"
+	"github.com/fuenr/myteam/internal/domain"
 	"github.com/fuenr/myteam/internal/server"
 	"github.com/fuenr/myteam/internal/service"
 )
@@ -53,6 +54,9 @@ func main() {
 	// Protected Routes
 	// Helper to wrap handlers with Auth Middleware
 	protected := middleware.AuthMiddleware
+	adminOnly := func(next http.HandlerFunc) http.Handler {
+		return protected(middleware.RequireRole(domain.RoleAdmin, next))
+	}
 	selfOrAdmin := func(next http.HandlerFunc) http.Handler {
 		return protected(middleware.RequireSelfOrAdmin(next))
 	}
@@ -71,6 +75,7 @@ func main() {
 	// User request focused on "Create or Edit". Let's restrict Edit.
 
 	mux.Handle("PUT /users/{id}", selfOrAdmin(h.UpdateUser))
+	mux.Handle("DELETE /users/{id}", adminOnly(h.DeleteUser))
 
 	// 5. Server
 	srv := server.NewServer(cfg.ServerPort, mux)

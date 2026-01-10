@@ -234,6 +234,21 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	h.respondJSON(w, http.StatusOK, user)
 }
 
+func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	idStr := r.PathValue("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		h.respondError(w, domain.ErrInvalidInput)
+		return
+	}
+
+	if err := h.userService.Delete(r.Context(), id); err != nil {
+		h.respondError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (h *Handler) GetUsersByCompany(w http.ResponseWriter, r *http.Request) {
 	idStr := r.PathValue("companyID")
 	id, err := uuid.Parse(idStr)

@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard';
 import UsersPage from './pages/UsersPage';
 import Register from './pages/Register';
 import Layout from './components/Layout';
+import UserDetailPage from './pages/UserDetailPage';
 import './index.css';
 
 function App() {
@@ -41,6 +42,7 @@ function App() {
             <Navigate to="/login" replace />
           )
         } />
+        <Route path="/user/detail/:id" element={user ? <UserDetailPage /> : <Navigate to="/login" replace />} />
         <Route path="/users" element={
           user ? (
             <Layout onLogout={handleLogout} userEmail={user.email}>
