@@ -18,6 +18,11 @@ function App() {
     setUser(userData);
   };
 
+  const handleUserUpdate = (userData: any) => {
+    setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
+  };
+
   const handleLogout = () => {
     setUser(null);
     localStorage.removeItem('token');
@@ -42,10 +47,10 @@ function App() {
             <Navigate to="/login" replace />
           )
         } />
-        <Route path="/user/detail/:id" element={user ? <UserDetailPage /> : <Navigate to="/login" replace />} />
+        <Route path="/user/detail/:id" element={user ? <UserDetailPage onUserUpdate={handleUserUpdate} /> : <Navigate to="/login" replace />} />
         <Route path="/users" element={
           user ? (
-            <Layout onLogout={handleLogout} userEmail={user.email}>
+            <Layout onLogout={handleLogout} currentUser={user}>
               <UsersPage currentUser={user} />
             </Layout>
           ) : (

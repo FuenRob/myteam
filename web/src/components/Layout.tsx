@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 import {
     LayoutDashboard,
@@ -6,19 +7,21 @@ import {
     Settings,
     LogOut,
     Bell,
-    Search
+    Search,
+    User
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 interface LayoutProps {
     children: ReactNode;
     onLogout: () => void;
-    userEmail?: string;
+    currentUser: any;
 }
 
-export default function Layout({ children, onLogout, userEmail }: LayoutProps) {
+export default function Layout({ children, onLogout, currentUser }: LayoutProps) {
     const navigate = useNavigate();
     const location = useLocation();
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     const menuItems = [
         { id: 'dashboard', label: 'Overview', icon: LayoutDashboard, path: '/dashboard' },
@@ -126,20 +129,85 @@ export default function Layout({ children, onLogout, userEmail }: LayoutProps) {
                         <button style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', padding: 0 }}>
                             <Bell size={20} />
                         </button>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                            <div style={{ textAlign: 'right' }}>
-                                <p style={{ fontSize: '0.875rem', fontWeight: 600, margin: 0 }}>Admin User</p>
-                                <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', margin: 0 }}>{userEmail || 'admin@myteam.com'}</p>
+
+                        <div style={{ position: 'relative' }}>
+                            <div
+                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}
+                            >
+                                <div style={{ textAlign: 'right' }}>
+                                    <p style={{ fontSize: '0.875rem', fontWeight: 600, margin: 0 }}>{currentUser?.name || 'User'}</p>
+                                    <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', margin: 0 }}>{currentUser?.email || 'email@example.com'}</p>
+                                </div>
+                                <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'var(--color-surface-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', fontWeight: 600 }}>
+                                    {currentUser?.name ? currentUser.name.substring(0, 2).toUpperCase() : 'U'}
+                                </div>
                             </div>
-                            <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'var(--color-surface-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                AU
-                            </div>
+
+                            {isDropdownOpen && (
+                                <div style={{
+                                    position: 'absolute',
+                                    right: 0,
+                                    top: '100%',
+                                    marginTop: '0.5rem',
+                                    backgroundColor: 'var(--color-surface)',
+                                    border: '1px solid var(--color-border)',
+                                    borderRadius: 'var(--radius-md)',
+                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.5)',
+                                    zIndex: 20,
+                                    minWidth: '200px',
+                                    overflow: 'hidden'
+                                }}>
+                                    <button
+                                        onClick={() => {
+                                            setIsDropdownOpen(false);
+                                            navigate(`/user/detail/${currentUser.id}`);
+                                        }}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.75rem',
+                                            padding: '0.75rem 1rem',
+                                            width: '100%',
+                                            background: 'none',
+                                            border: 'none',
+                                            color: 'var(--color-text)',
+                                            textAlign: 'left',
+                                            cursor: 'pointer'
+                                        }}
+                                        className="hover:bg-white/5"
+                                    >
+                                        <User size={16} />
+                                        Edit Profile
+                                    </button>
+                                    <div style={{ height: '1px', backgroundColor: 'var(--color-border)', margin: '0.25rem 0' }}></div>
+                                    <button
+                                        onClick={onLogout}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.75rem',
+                                            padding: '0.75rem 1rem',
+                                            width: '100%',
+                                            background: 'none',
+                                            border: 'none',
+                                            color: '#ef4444',
+                                            textAlign: 'left',
+                                            cursor: 'pointer'
+                                        }}
+                                        className="hover:bg-white/5"
+                                    >
+                                        <LogOut size={16} />
+                                        Sign Out
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </header>
 
                 {/* Page Content */}
-                <main style={{ padding: '2rem', flex: 1, overflowY: 'auto' }}>
+                <main style={{ padding: '2rem', flex: 1, overflowY: 'auto' }} onClick={() => setIsDropdownOpen(false)}>
                     {children}
                 </main>
             </div>

@@ -13,7 +13,11 @@ interface User {
     // company_id is not always returned or needed here unless we fetch company details
 }
 
-export default function UserDetailPage() {
+interface UserDetailPageProps {
+    onUserUpdate?: (user: any) => void;
+}
+
+export default function UserDetailPage({ onUserUpdate }: UserDetailPageProps) {
     const { id } = useParams();
     const navigate = useNavigate();
     const [user, setUser] = useState<User | null>(null);
@@ -66,6 +70,17 @@ export default function UserDetailPage() {
             const updatedUser = await res.json();
             setUser(updatedUser);
             setSuccess('User updated successfully');
+
+            // If updating self, trigger callback
+            if (currentUser.id === user.id) {
+                // Merge updated fields into current user to ensure token/other fields persist if needed
+                // But the backend returns the full user object typically.
+                // NOTE: Ideally we should update the token if claims changed, but for now we just update the UI user object.
+                const newCurrentUser = { ...currentUser, ...updatedUser };
+                if (onUserUpdate) {
+                    onUserUpdate(newCurrentUser);
+                }
+            }
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -93,7 +108,7 @@ export default function UserDetailPage() {
 
     if (loading) {
         return (
-            <Layout onLogout={() => { }} userEmail={currentUser?.email}>
+            <Layout onLogout={() => { }} currentUser={currentUser}>
                 <div style={{ display: 'flex', justifyContent: 'center', marginTop: '4rem' }}>
                     <Loader2 className="animate-spin text-muted" size={32} />
                 </div>
@@ -103,7 +118,7 @@ export default function UserDetailPage() {
 
     if (!user) {
         return (
-            <Layout onLogout={() => { }} userEmail={currentUser?.email}>
+            <Layout onLogout={() => { }} currentUser={currentUser}>
                 <div style={{ textAlign: 'center', marginTop: '4rem' }}>
                     <h2 style={{ fontSize: '1.5rem', fontWeight: 700 }}>User not found</h2>
                     <button className="btn mt-4" onClick={() => navigate('/dashboard')}>Back to Dashboard</button>
@@ -112,8 +127,11 @@ export default function UserDetailPage() {
         );
     }
 
+    const isSelf = currentUser?.id === user?.id; // Check if viewing own profile
+    const canEdit = isAdmin || isSelf; // Admin or Self can edit
+
     return (
-        <Layout onLogout={() => { }} userEmail={currentUser?.email}>
+        <Layout onLogout={() => { }} currentUser={currentUser}>
             <div style={{ maxWidth: '800px', margin: '0 auto' }}>
                 <button
                     onClick={() => navigate('/dashboard')} // Ideally go back to Users list
@@ -133,7 +151,7 @@ export default function UserDetailPage() {
                                 <p className="text-muted" style={{ fontSize: '0.875rem' }}>User ID: {user.id}</p>
                             </div>
                         </div>
-                        {isAdmin && (
+                        {isAdmin && !isSelf && (
                             <button
                                 onClick={handleDelete}
                                 style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}
@@ -165,7 +183,7 @@ export default function UserDetailPage() {
                                     style={{ paddingLeft: '3rem' }}
                                     value={name}
                                     onChange={e => setName(e.target.value)}
-                                    disabled={!isAdmin}
+                                    disabled={!canEdit}
                                 />
                             </div>
                         </div>
@@ -179,7 +197,7 @@ export default function UserDetailPage() {
                                     style={{ paddingLeft: '3rem' }}
                                     value={email}
                                     onChange={e => setEmail(e.target.value)}
-                                    disabled={!isAdmin}
+                                    disabled={!canEdit}
                                 />
                             </div>
                         </div>
@@ -193,7 +211,7 @@ export default function UserDetailPage() {
                                     style={{ paddingLeft: '3rem', appearance: 'none' }}
                                     value={role}
                                     onChange={e => setRole(e.target.value)}
-                                    disabled={!isAdmin}
+                                    disabled={!isAdmin} // Only Admin can change roles
                                 >
                                     <option value="EMPLOYEE">User (Employee)</option>
                                     <option value="ADMIN">Administrator</option>
@@ -214,7 +232,7 @@ export default function UserDetailPage() {
                             </div>
                         </div>
 
-                        {isAdmin && (
+                        {canEdit && (
                             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
                                 <button className="btn" style={{ width: 'auto' }} onClick={handleSave} disabled={saving}>
                                     {saving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} style={{ marginRight: '8px' }} />}

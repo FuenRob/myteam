@@ -75,7 +75,7 @@ export default function Dashboard({ currentUser, onLogout }: DashboardProps) {
     }, []);
 
     return (
-        <Layout onLogout={onLogout} userEmail={currentUser?.email}>
+        <Layout onLogout={onLogout} currentUser={currentUser}>
             <div style={{ marginBottom: '2rem' }}>
                 <h1 style={{ fontSize: '1.875rem', fontWeight: 700, marginBottom: '0.5rem' }}>Dashboard Overview</h1>
                 <p className="text-muted">Welcome back, {currentUser?.name || 'User'}! Here's what's happening today.</p>
