@@ -220,3 +220,72 @@ func isUniqueViolation(err error) bool {
 	}
 	return false
 }
+
+// --- ContractRepository ---
+
+func (r *Repository) CreateContract(ctx context.Context, c *domain.Contract) error {
+	query := `INSERT INTO contracts (id, user_id, start_date, end_date, type, position, salary, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+	_, err := r.db.ExecContext(ctx, query, c.ID, c.UserID, c.StartDate, c.EndDate, c.Type, c.Position, c.Salary, c.CreatedAt, c.UpdatedAt)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *Repository) GetContractByID(ctx context.Context, id uuid.UUID) (*domain.Contract, error) {
+	query := `SELECT id, user_id, start_date, end_date, type, position, salary, created_at, updated_at FROM contracts WHERE id = $1`
+	row := r.db.QueryRowContext(ctx, query, id)
+	var c domain.Contract
+	if err := row.Scan(&c.ID, &c.UserID, &c.StartDate, &c.EndDate, &c.Type, &c.Position, &c.Salary, &c.CreatedAt, &c.UpdatedAt); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, domain.ErrNotFound
+		}
+		return nil, err
+	}
+	return &c, nil
+}
+
+func (r *Repository) GetContractsByUserID(ctx context.Context, userID uuid.UUID) ([]*domain.Contract, error) {
+	query := `SELECT id, user_id, start_date, end_date, type, position, salary, created_at, updated_at FROM contracts WHERE user_id = $1`
+	rows, err := r.db.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var contracts []*domain.Contract
+	for rows.Next() {
+		var c domain.Contract
+		if err := rows.Scan(&c.ID, &c.UserID, &c.StartDate, &c.EndDate, &c.Type, &c.Position, &c.Salary, &c.CreatedAt, &c.UpdatedAt); err != nil {
+			return nil, err
+		}
+		contracts = append(contracts, &c)
+	}
+	return contracts, rows.Err()
+}
+
+func (r *Repository) UpdateContract(ctx context.Context, c *domain.Contract) error {
+	query := `UPDATE contracts SET start_date = $1, end_date = $2, type = $3, position = $4, salary = $5, updated_at = $6 WHERE id = $7`
+	res, err := r.db.ExecContext(ctx, query, c.StartDate, c.EndDate, c.Type, c.Position, c.Salary, c.UpdatedAt, c.ID)
+	if err != nil {
+		return err
+	}
+	rows, _ := res.RowsAffected()
+	if rows == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}
+
+func (r *Repository) DeleteContract(ctx context.Context, id uuid.UUID) error {
+	query := `DELETE FROM contracts WHERE id = $1`
+	res, err := r.db.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+	rows, _ := res.RowsAffected()
+	if rows == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}

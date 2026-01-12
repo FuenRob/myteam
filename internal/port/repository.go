@@ -26,3 +26,12 @@ type UserRepository interface {
 	DeleteUser(ctx context.Context, id uuid.UUID) error
 	Count(ctx context.Context) (int64, error)
 }
+
+type ContractRepository interface {
+	CreateContract(ctx context.Context, contract *domain.Contract) error
+	GetContractByID(ctx context.Context, id uuid.UUID) (*domain.Contract, error)
+	GetContractsByUserID(ctx context.Context, userID uuid.UUID) ([]*domain.Contract, error)
+	UpdateContract(ctx context.Context, contract *domain.Contract) error
+	DeleteContract(ctx context.Context, id uuid.UUID) error
+	Count(ctx context.Context) (int64, error)
+}

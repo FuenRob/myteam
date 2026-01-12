@@ -10,6 +10,7 @@ export default defineConfig({
       '/users': 'http://localhost:8080',
       '/companies': 'http://localhost:8080',
       '/dashboard': 'http://localhost:8080',
+      '/contracts': 'http://localhost:8080',
     }
   }
 })

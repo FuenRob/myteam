@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/fuenr/myteam/internal/adapter/middleware"
 	"github.com/fuenr/myteam/internal/auth"
@@ -15,13 +16,15 @@ type Handler struct {
 	companyService   *service.CompanyService
 	userService      *service.UserService
 	dashboardService *service.DashboardService
+	contractService  *service.ContractService
 }
 
-func NewHandler(companyService *service.CompanyService, userService *service.UserService, dashboardService *service.DashboardService) *Handler {
+func NewHandler(companyService *service.CompanyService, userService *service.UserService, dashboardService *service.DashboardService, contractService *service.ContractService) *Handler {
 	return &Handler{
 		companyService:   companyService,
 		userService:      userService,
 		dashboardService: dashboardService,
+		contractService:  contractService,
 	}
 }
 
@@ -274,4 +277,137 @@ func (h *Handler) GetDashboardStats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	h.respondJSON(w, http.StatusOK, stats)
+}
+
+// --- Contract Handlers ---
+
+func (h *Handler) CreateContract(w http.ResponseWriter, r *http.Request) {
+	userIDStr := r.PathValue("userID")
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		h.respondError(w, domain.ErrInvalidInput)
+		return
+	}
+
+	type CreateContractRequest struct {
+		StartDate string              `json:"start_date"`
+		EndDate   *string             `json:"end_date"`
+		Type      domain.ContractType `json:"type"`
+		Position  string              `json:"position"`
+		Salary    float64             `json:"salary"`
+	}
+	var req CreateContractRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.respondError(w, domain.ErrInvalidInput)
+		return
+	}
+
+	// Parse Dates
+	startDate, err := time.Parse("2006-01-02", req.StartDate)
+	if err != nil {
+		h.respondError(w, domain.ErrInvalidInput)
+		return
+	}
+	var endDate *time.Time
+	if req.EndDate != nil && *req.EndDate != "" {
+		t, err := time.Parse("2006-01-02", *req.EndDate)
+		if err != nil {
+			h.respondError(w, domain.ErrInvalidInput)
+			return
+		}
+		endDate = &t
+	}
+
+	contract, err := h.contractService.Create(r.Context(), userID, startDate, endDate, req.Type, req.Position, req.Salary)
+	if err != nil {
+		// Use respondError which handles internal vs domain errors (like InvalidInput)
+		// We might need to map errors better if NewContract returns generic errors.
+		if err.Error() == "contract not found" {
+			h.respondError(w, domain.ErrNotFound)
+			return
+		} else if err.Error() == domain.ErrInvalidInput.Error() {
+			// Check if it's a validation error
+			h.respondJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			return
+		}
+		h.respondError(w, err)
+		return
+	}
+	h.respondJSON(w, http.StatusCreated, contract)
+}
+
+func (h *Handler) GetContractsByUser(w http.ResponseWriter, r *http.Request) {
+	userIDStr := r.PathValue("userID")
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		h.respondError(w, domain.ErrInvalidInput)
+		return
+	}
+
+	contracts, err := h.contractService.GetByUser(r.Context(), userID)
+	if err != nil {
+		h.respondError(w, err)
+		return
+	}
+	h.respondJSON(w, http.StatusOK, contracts)
+}
+
+func (h *Handler) UpdateContract(w http.ResponseWriter, r *http.Request) {
+	idStr := r.PathValue("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		h.respondError(w, domain.ErrInvalidInput)
+		return
+	}
+
+	type UpdateContractRequest struct {
+		StartDate string              `json:"start_date"`
+		EndDate   *string             `json:"end_date"`
+		Type      domain.ContractType `json:"type"`
+		Position  string              `json:"position"`
+		Salary    float64             `json:"salary"`
+	}
+	var req UpdateContractRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.respondError(w, domain.ErrInvalidInput)
+		return
+	}
+
+	// Parse Dates
+	startDate, err := time.Parse("2006-01-02", req.StartDate)
+	if err != nil {
+		h.respondError(w, domain.ErrInvalidInput)
+		return
+	}
+	var endDate *time.Time
+	if req.EndDate != nil && *req.EndDate != "" {
+		t, err := time.Parse("2006-01-02", *req.EndDate)
+		if err != nil {
+			h.respondError(w, domain.ErrInvalidInput)
+			return
+		}
+		endDate = &t
+	}
+
+	contract, err := h.contractService.Update(r.Context(), id, startDate, endDate, req.Type, req.Position, req.Salary)
+	if err != nil {
+		h.respondJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
+	h.respondJSON(w, http.StatusOK, contract)
+}
+
+func (h *Handler) DeleteContract(w http.ResponseWriter, r *http.Request) {
+	idStr := r.PathValue("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		h.respondError(w, domain.ErrInvalidInput)
+		return
+	}
+
+	if err := h.contractService.Delete(r.Context(), id); err != nil {
+		h.respondError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }

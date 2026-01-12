@@ -34,7 +34,8 @@ func main() {
 	companyService := service.NewCompanyService(repo)
 	userService := service.NewUserService(repo, repo)
 	dashboardService := service.NewDashboardService(repo, repo)
-	h := handler.NewHandler(companyService, userService, dashboardService)
+	contractService := service.NewContractService(repo, repo)
+	h := handler.NewHandler(companyService, userService, dashboardService, contractService)
 
 	// 4. Router
 	mux := http.NewServeMux()
@@ -76,6 +77,12 @@ func main() {
 
 	mux.Handle("PUT /users/{id}", selfOrAdmin(h.UpdateUser))
 	mux.Handle("DELETE /users/{id}", adminOnly(h.DeleteUser))
+
+	// Contract Management (Admin Only)
+	mux.Handle("POST /users/{userID}/contracts", adminOnly(h.CreateContract))
+	mux.Handle("GET /users/{userID}/contracts", adminOnly(h.GetContractsByUser))
+	mux.Handle("PUT /contracts/{id}", adminOnly(h.UpdateContract))
+	mux.Handle("DELETE /contracts/{id}", adminOnly(h.DeleteContract))
 
 	// 5. Server
 	srv := server.NewServer(cfg.ServerPort, mux)
