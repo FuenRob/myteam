@@ -6,6 +6,7 @@ Este proyecto es una API REST backend escrita en **Go** para la gestión de usua
 
 - Gestión de **Empresas** (Creación, Lectura, Actualización, Borrado).
 - Gestión de **Usuarios** asignados a empresas.
+- Gestión de **Contratos** laborales (Solo Admin).
 - Roles de usuario: `ADMIN` y `EMPLOYEE`.
 - Arquitectura hexagonal (Ports & Adapters).
 - Persistencia en **PostgreSQL**.
@@ -26,13 +27,14 @@ El proyecto sigue el estándar de estructura de proyectos en Go:
 myteam/
 ├── cmd/api/            # Punto de entrada de la aplicación (main.go)
 ├── internal/
-│   ├── domain/         # Entidades de negocio (Company, User) y Errores
+│   ├── domain/         # Entidades de negocio (Company, User, Contract) y Errores
 │   ├── port/           # Interfaces (Puertos) para Repositorios y Servicios
 │   ├── service/        # Lógica de negocio (Casos de Uso)
 │   ├── adapter/        # Implementaciones (Adaptadores)
 │   │   ├── handler/    # Controladores HTTP
 │   │   └── storage/    # Implementación de persistencia (Postgres)
 ├── migrations/         # Scripts SQL de creación de tablas
+├── web/                # Frontend React + Vite
 └── docker-compose.yaml # Configuración de BBDD y herramientas
 ```
 
@@ -85,12 +87,34 @@ Script ubicación: `migrations/schema.sql`.
 - **Obtener Usuario**
   - `GET /users/{id}`
 
+- **Actualizar Usuario**
+  - `PUT /users/{id}`
+  - Body: `{"name": "...", "email": "...", "role": "..."}`
+
+- **Borrar Usuario**
+  - `DELETE /users/{id}`
+
 - **Listar Usuarios de una Empresa**
   - `GET /companies/{companyID}/users`
 
 - **Crear Usuarios Masivamente (Batch)**
   - `POST /companies/{companyID}/users/batch`
   - Body: `[{"name": "...", ...}, ...]`
+
+### Contratos (Admin Only)
+
+- **Crear Contrato**
+  - `POST /users/{userID}/contracts`
+  - Body: `{"start_date": "2024-01-01", "type": "Indefinido", "position": "Dev", "salary": 30000}`
+
+- **Listar Contratos de Usuario**
+  - `GET /users/{userID}/contracts`
+
+- **Actualizar Contrato**
+  - `PUT /contracts/{id}`
+
+- **Borrar Contrato**
+  - `DELETE /contracts/{id}`
 
 ## ✅ Pruebas
 Puedes probar los endpoints usando `curl`:
