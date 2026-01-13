@@ -87,7 +87,7 @@ func (r *Repository) DeleteCompany(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (r *Repository) Count(ctx context.Context) (int64, error) {
+func (r *Repository) CountCompanies(ctx context.Context) (int64, error) {
 	query := `SELECT COUNT(*) FROM companies`
 	var count int64
 	if err := r.db.QueryRowContext(ctx, query).Scan(&count); err != nil {
@@ -288,4 +288,31 @@ func (r *Repository) DeleteContract(ctx context.Context, id uuid.UUID) error {
 		return domain.ErrNotFound
 	}
 	return nil
+}
+
+func (r *Repository) CountContracts(ctx context.Context) (int64, error) {
+	query := `SELECT COUNT(*) FROM contracts`
+	var count int64
+	if err := r.db.QueryRowContext(ctx, query).Scan(&count); err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (r *Repository) SumSalaries(ctx context.Context) (float64, error) {
+	query := `SELECT COALESCE(SUM(salary), 0) FROM contracts`
+	var total float64
+	if err := r.db.QueryRowContext(ctx, query).Scan(&total); err != nil {
+		return 0, err
+	}
+	return total, nil
+}
+
+func (r *Repository) CountUsers(ctx context.Context) (int64, error) {
+	query := `SELECT COUNT(*) FROM users`
+	var count int64
+	if err := r.db.QueryRowContext(ctx, query).Scan(&count); err != nil {
+		return 0, err
+	}
+	return count, nil
 }

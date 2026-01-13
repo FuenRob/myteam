@@ -49,7 +49,7 @@ export default function Dashboard({ currentUser, onLogout }: DashboardProps) {
     const [stats, setStats] = useState<StatData[]>([
         { title: "Total Users", value: "0", change: "0%", icon: Users, trend: 'neutral' },
         { title: "Active Companies", value: "0", change: "0%", icon: Building2, trend: 'neutral' },
-        { title: "Revenue", value: "$45,231", change: "0.8%", icon: DollarSign, trend: 'down' },
+        { title: "Annual Payroll", value: "€0", change: "0%", icon: DollarSign, trend: 'neutral' },
         { title: "Server Usage", value: "24%", change: "5.0%", icon: Activity, trend: 'neutral' },
     ]);
 
@@ -61,11 +61,19 @@ export default function Dashboard({ currentUser, onLogout }: DashboardProps) {
                     setStats(prevStats => prevStats.map(stat => {
                         if (stat.title === "Total Users") {
                             const apiStat = data.displaystats.find((s: any) => s.type === "users");
-                            if (apiStat) return { ...stat, value: apiStat.value.toString(), trend: 'up', change: '+1' };
+                            if (apiStat) return { ...stat, value: apiStat.value.toString(), trend: 'neutral', change: '+0' };
                         }
                         if (stat.title === "Active Companies") {
                             const apiStat = data.displaystats.find((s: any) => s.type === "companies");
-                            if (apiStat) return { ...stat, value: apiStat.value.toString(), trend: 'up', change: '+1' };
+                            if (apiStat) return { ...stat, value: apiStat.value.toString(), trend: 'neutral', change: '+0' };
+                        }
+                        if (stat.title === "Annual Payroll") {
+                            const apiStat = data.displaystats.find((s: any) => s.type === "salaries");
+                            if (apiStat) {
+                                // Format as currency
+                                const formatted = new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(apiStat.value);
+                                return { ...stat, value: formatted, trend: 'neutral', change: '+0' };
+                            }
                         }
                         return stat;
                     }));

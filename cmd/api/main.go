@@ -33,7 +33,7 @@ func main() {
 	repo := postgres.NewRepository(db)
 	companyService := service.NewCompanyService(repo)
 	userService := service.NewUserService(repo, repo)
-	dashboardService := service.NewDashboardService(repo, repo)
+	dashboardService := service.NewDashboardService(repo, repo, repo)
 	contractService := service.NewContractService(repo, repo)
 	h := handler.NewHandler(companyService, userService, dashboardService, contractService)
 

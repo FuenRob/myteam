@@ -13,7 +13,7 @@ type CompanyRepository interface {
 	GetCompanyByCIF(ctx context.Context, cif string) (*domain.Company, error)
 	UpdateCompany(ctx context.Context, company *domain.Company) error
 	DeleteCompany(ctx context.Context, id uuid.UUID) error
-	Count(ctx context.Context) (int64, error)
+	CountCompanies(ctx context.Context) (int64, error)
 }
 
 type UserRepository interface {
@@ -24,7 +24,7 @@ type UserRepository interface {
 	GetUsersByCompanyID(ctx context.Context, companyID uuid.UUID) ([]*domain.User, error)
 	UpdateUser(ctx context.Context, user *domain.User) error
 	DeleteUser(ctx context.Context, id uuid.UUID) error
-	Count(ctx context.Context) (int64, error)
+	CountUsers(ctx context.Context) (int64, error)
 }
 
 type ContractRepository interface {
@@ -33,5 +33,6 @@ type ContractRepository interface {
 	GetContractsByUserID(ctx context.Context, userID uuid.UUID) ([]*domain.Contract, error)
 	UpdateContract(ctx context.Context, contract *domain.Contract) error
 	DeleteContract(ctx context.Context, id uuid.UUID) error
-	Count(ctx context.Context) (int64, error)
+	CountContracts(ctx context.Context) (int64, error)
+	SumSalaries(ctx context.Context) (float64, error)
 }
