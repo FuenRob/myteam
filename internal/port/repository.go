@@ -36,3 +36,11 @@ type ContractRepository interface {
 	CountContracts(ctx context.Context) (int64, error)
 	SumSalaries(ctx context.Context) (float64, error)
 }
+
+type VacationRepository interface {
+	CreateVacation(ctx context.Context, vacation *domain.Vacation) error
+	GetVacationByID(ctx context.Context, id uuid.UUID) (*domain.Vacation, error)
+	GetVacationsByUserID(ctx context.Context, userID uuid.UUID) ([]*domain.Vacation, error)
+	UpdateVacation(ctx context.Context, vacation *domain.Vacation) error
+	DeleteVacation(ctx context.Context, id uuid.UUID) error
+}

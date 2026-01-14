@@ -35,7 +35,9 @@ func main() {
 	userService := service.NewUserService(repo, repo)
 	dashboardService := service.NewDashboardService(repo, repo, repo)
 	contractService := service.NewContractService(repo, repo)
+	vacationService := service.NewVacationService(repo)
 	h := handler.NewHandler(companyService, userService, dashboardService, contractService)
+	vacationHandler := server.NewVacationHandler(vacationService)
 
 	// 4. Router
 	mux := http.NewServeMux()
@@ -83,6 +85,16 @@ func main() {
 	mux.Handle("GET /users/{userID}/contracts", adminOnly(h.GetContractsByUser))
 	mux.Handle("PUT /contracts/{id}", adminOnly(h.UpdateContract))
 	mux.Handle("DELETE /contracts/{id}", adminOnly(h.DeleteContract))
+
+	// Vacation Management
+	// Employees can request vacations (Self or Admin?) -> Let's say Protected for now, or SelfOrAdmin.
+	// Logic: User requests for themselves.
+	mux.Handle("POST /users/{userID}/vacations", selfOrAdmin(vacationHandler.CreateVacation))
+	mux.Handle("GET /users/{userID}/vacations", selfOrAdmin(vacationHandler.GetVacationsByUserID))
+	// Update/Delete -> User can cancel pending? Admin can approve/reject?
+	// For now, let's allow SelfOrAdmin to Update/Delete.
+	mux.Handle("PUT /vacations/{id}", protected(http.HandlerFunc(vacationHandler.UpdateVacation)))
+	mux.Handle("DELETE /vacations/{id}", protected(http.HandlerFunc(vacationHandler.DeleteVacation)))
 
 	// 5. Server
 	srv := server.NewServer(cfg.ServerPort, mux)
