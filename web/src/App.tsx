@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import UsersPage from './pages/UsersPage';
 import Register from './pages/Register';
+import VacationsPage from './pages/VacationsPage';
 import Layout from './components/Layout';
 import UserDetailPage from './pages/UserDetailPage';
 import './index.css';
@@ -53,6 +54,13 @@ function App() {
             <Layout onLogout={handleLogout} currentUser={user}>
               <UsersPage currentUser={user} />
             </Layout>
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        } />
+        <Route path="/vacations" element={
+          user ? (
+            <VacationsPage currentUser={user} />
           ) : (
             <Navigate to="/login" replace />
           )

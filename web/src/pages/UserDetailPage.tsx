@@ -4,6 +4,7 @@ import { ArrowLeft, Save, Trash2, Mail, Calendar, Shield, User as UserIcon, Load
 import { apiFetch } from '../utils/api';
 import Layout from '../components/Layout';
 import ContractModal from '../components/ContractModal';
+import type { Vacation } from '../types';
 
 interface User {
     id: string;
@@ -40,6 +41,9 @@ export default function UserDetailPage({ onUserUpdate }: UserDetailPageProps) {
     const [isContractModalOpen, setIsContractModalOpen] = useState(false);
     const [editingContract, setEditingContract] = useState<any>(null);
 
+    // Vacation State
+    const [vacations, setVacations] = useState<Vacation[]>([]);
+
     useEffect(() => {
         if (id) {
             setLoading(true);
@@ -63,15 +67,28 @@ export default function UserDetailPage({ onUserUpdate }: UserDetailPageProps) {
                 );
             }
 
+            // Fetch Vacations
+            promises.push(
+                apiFetch(`/users/${id}/vacations`)
+                    .then(res => res.json())
+                    .catch(err => {
+                        console.error("Failed to fetch vacations", err);
+                        return [];
+                    })
+            );
+
             Promise.all(promises)
-                .then(([userData, contractsData]) => {
+                .then(([userData, contractsData, vacationsData]) => {
                     setUser(userData);
                     setName(userData.name);
                     setEmail(userData.email);
                     setRole(userData.role);
 
-                    if (contractsData) {
+                    if (contractsData && Array.isArray(contractsData)) {
                         setContracts(contractsData);
+                    }
+                    if (vacationsData && Array.isArray(vacationsData)) {
+                        setVacations(vacationsData);
                     }
                 })
                 .catch(err => setError(err.message))
@@ -155,15 +172,17 @@ export default function UserDetailPage({ onUserUpdate }: UserDetailPageProps) {
         }
     };
 
+    const openEditContract = (contract: any) => {
+        setEditingContract(contract);
+        setIsContractModalOpen(true);
+    };
+
     const openCreateContract = () => {
         setEditingContract(null);
         setIsContractModalOpen(true);
     };
 
-    const openEditContract = (contract: any) => {
-        setEditingContract(contract);
-        setIsContractModalOpen(true);
-    };
+    // No create/edit handlers needed for read-only view
 
     if (loading) {
         return (
@@ -302,9 +321,55 @@ export default function UserDetailPage({ onUserUpdate }: UserDetailPageProps) {
                     </div>
                 </div>
 
+                {/* Vacations Section (Read Only) */}
+                <div className="card" style={{ marginTop: '2rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                        <div>
+                            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>Vacations</h2>
+                            <p className="text-muted" style={{ fontSize: '0.875rem' }}>Recorded vacations for this user (Read Only).</p>
+                        </div>
+                    </div>
+
+                    {vacations.length === 0 ? (
+                        <p className="text-muted" style={{ textAlign: 'center', padding: '2rem', border: '1px dashed var(--color-border)', borderRadius: 'var(--radius-md)' }}>No vacation requests found.</p>
+                    ) : (
+                        <div style={{ display: 'grid', gap: '1rem' }}>
+                            {vacations.map(vacation => (
+                                <div key={vacation.id} style={{
+                                    padding: '1rem',
+                                    border: '1px solid var(--color-border)',
+                                    borderRadius: 'var(--radius-md)',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    backgroundColor: 'var(--color-surface)'
+                                }}>
+                                    <div>
+                                        <div style={{ fontWeight: 600, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            {new Date(vacation.start_date).toLocaleDateString()} — {new Date(vacation.end_date).toLocaleDateString()}
+                                            <span style={{
+                                                fontSize: '0.75rem',
+                                                padding: '0.1rem 0.5rem',
+                                                borderRadius: '1rem',
+                                                backgroundColor: vacation.status === 'APPROVED' ? 'rgba(16, 185, 129, 0.1)' : vacation.status === 'REJECTED' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(234, 179, 8, 0.1)',
+                                                color: vacation.status === 'APPROVED' ? '#34d399' : vacation.status === 'REJECTED' ? '#ef4444' : '#eab308'
+                                            }}>
+                                                {vacation.status}
+                                            </span>
+                                        </div>
+                                        <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
+                                            Requested on {new Date(vacation.created_at).toLocaleDateString()}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
                 {/* Contracts Section (Admin Only) */}
                 {isAdmin && (
-                    <div className="card">
+                    <div className="card" style={{ marginTop: '2rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                             <div>
                                 <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>Contracts</h2>

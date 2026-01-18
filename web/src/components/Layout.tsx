@@ -8,7 +8,8 @@ import {
     LogOut,
     Bell,
     Search,
-    User
+    User,
+    Calendar // New Icon
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -26,6 +27,7 @@ export default function Layout({ children, onLogout, currentUser }: LayoutProps)
     const menuItems = [
         { id: 'dashboard', label: 'Overview', icon: LayoutDashboard, path: '/dashboard' },
         { id: 'users', label: 'Users', icon: Users, path: '/users' },
+        { id: 'vacations', label: 'Vacations', icon: Calendar, path: '/vacations' },
         { id: 'companies', label: 'Companies', icon: Building2, path: '/companies' },
         { id: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
     ];
